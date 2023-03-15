@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id          Int       @id @default(autoincrement())
+  username    String
+  nationality String
+  age         Int
+  budget      Int       @default(100000000)
+  riotId      String
+  email       String    @unique
+  password    String
+  rank        String    @default("null")
+  tokens      tokens[]
+  role        UserRole  @default(user)
+  UserTeam    UserTeam?
+}
+
+model Players {
+  id          Int         @id @default(autoincrement())
+  playerName  String
+  nationality String
+  cost        Int
+  lane        Lane
+  teamId      String
+  team        Team        @relation(fields: [teamId], references: [teamName])
+  toplaner    UserTeam[]  @relation("toplaner")
+  jungler     UserTeam[]  @relation("jungler")
+  midlaner    UserTeam[]  @relation("midlaner")
+  botlaner    UserTeam[]  @relation("botlaner")
+  supporter   UserTeam[]  @relation("supporter")
+  sup1        UserTeam[]  @relation("sup1")
+  sup2        UserTeam[]  @relation("sup2")
+  captin      UserTeam[]  @relation("captin")
+  KDA         PlayerKDA[]
+}
+
+model Team {
+  teamName String    @id
+  player   Players[]
+  team1    Matches[] @relation("team1")
+  team2    Matches[] @relation("team2")
+}
+
+model UserTeam {
+  id                 Int     @id @default(autoincrement())
+  userId             Int     @unique
+  user               Users   @relation(fields: [userId], references: [id])
+  toplanerId         Int
+  toplaner           Players @relation(fields: [toplanerId], references: [id], name: "toplaner")
+  junglerId          Int
+  jungler            Players @relation(fields: [junglerId], references: [id], name: "jungler")
+  midlanerId         Int
+  midlaner           Players @relation(fields: [midlanerId], references: [id], name: "midlaner")
+  botlanerId         Int
+  botlaner           Players @relation(fields: [botlanerId], references: [id], name: "botlaner")
+  supporterId        Int
+  supporter          Players @relation(fields: [supporterId], references: [id], name: "supporter")
+  sup1Id             Int
+  sup1               Players @relation(fields: [sup1Id], references: [id], name: "sup1")
+  sup2Id             Int
+  sup2               Players @relation(fields: [sup2Id], references: [id], name: "sup2")
+  captinId           Int
+  captin             Players @relation(fields: [captinId], references: [id], name: "captin")
+  tripleCaptinStatus Boolean @default(false)
+  allInStatus        Boolean @default(false)
+  teamFanStatus      Boolean @default(false)
+  points             Int     @default(0)
+  transfers          Int     @default(2)
+  tripleCaptin       Int     @default(1) //triple points for the captin
+  allIn              Int     @default(1) // count points for sup players
+  teamFan            Int     @default(1) //5players from same team or 4 or 3
+}
+
+model Matches {
+  id      Int      @id @default(autoincrement())
+  date    DateTime
+  team1Id String
+  team2Id String
+  team1   Team     @relation(fields: [team1Id], references: [teamName], name: "team1")
+  team2   Team     @relation(fields: [team2Id], references: [teamName], name: "team2")
+}
+
+model PlayerKDA {
+  id          Int     @id @default(autoincrement())
+  playerId    Int
+  player      Players @relation(fields: [playerId], references: [id])
+  kills       Int
+  deathes     Int
+  assists     Int
+  visionScore Int
+  MVB         Boolean @default(false)
+  cs          Int
+  points      Int     @default(0)
+}
+
+model tokens {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  expiresAt DateTime
+  user      Users    @relation(fields: [userId], references: [id])
+}
+
+enum UserRole {
+  user
+  admin
+}
+
+enum Lane {
+  toplane
+  jungle
+  midlane
+  botlane
+  support
+}
