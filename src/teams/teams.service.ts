@@ -67,7 +67,7 @@ export class TeamsService {
       if (isCached) {
         return { isCached, message: "fetched all teams successfully" };
       }
-      const teams = await this.prisma.users.findMany({});
+      const teams = await this.prisma.team.findMany({});
       await this.cacheManager.set("teams", teams);
       return { ...teams, message: "fetched all teams sucessfully" };
     } catch (err) {
