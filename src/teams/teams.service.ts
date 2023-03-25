@@ -15,7 +15,12 @@ export class TeamsService {
   ) {}
   async createTeam(createTeamDto: CreateTeamDto) {
     try {
-      const team = this.prisma.team.create({
+      const verifyExistance = await this.prisma.team.findUnique({
+        where: { teamName: createTeamDto.teamName },
+      });
+      if (verifyExistance)
+        throw new HttpException("team does exist", HttpStatus.BAD_REQUEST);
+      const team = await this.prisma.team.create({
         data: createTeamDto,
       });
       await this.cacheManager.del("teams");
@@ -26,13 +31,13 @@ export class TeamsService {
   }
   async updateTeam(updateTeamDto: UpdateTeamDto, id: string) {
     try {
-      const validateTeam = this.prisma.team.findUnique({
+      const validateTeam = await this.prisma.team.findUnique({
         where: { teamName: id },
       });
       if (!validateTeam) {
         throw new HttpException("team doesn't exist", HttpStatus.BAD_REQUEST);
       }
-      const updatedTeam = this.prisma.team.update({
+      const updatedTeam = await this.prisma.team.update({
         where: { teamName: id },
         data: updateTeamDto,
       });
@@ -45,13 +50,14 @@ export class TeamsService {
   }
   async deleteTeam(id: string) {
     try {
-      const validateTeam = this.prisma.team.findUnique({
+      const validateTeam = await this.prisma.team.findUnique({
         where: { teamName: id },
       });
+      console.log(validateTeam);
       if (!validateTeam) {
         throw new HttpException("team doesn't exist", HttpStatus.BAD_REQUEST);
       }
-      this.prisma.team.delete({
+      await this.prisma.team.delete({
         where: { teamName: id },
       });
       await this.cacheManager.del("teams");

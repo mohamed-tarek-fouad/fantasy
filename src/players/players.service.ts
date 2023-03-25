@@ -14,7 +14,7 @@ export class PlayersService {
   ) {}
   async createPlayer(createPlayerDto: CreatePlayerDto) {
     try {
-      const player = this.prisma.players.create({
+      const player = await this.prisma.players.create({
         data: createPlayerDto,
       });
       await this.cacheManager.del("players");
@@ -25,13 +25,13 @@ export class PlayersService {
   }
   async updatePlayer(updatePlayerDto: UpdatePlayerDto, id: string) {
     try {
-      const validatePlayer = this.prisma.players.findUnique({
+      const validatePlayer = await this.prisma.players.findUnique({
         where: { id: parseInt(id) },
       });
       if (!validatePlayer) {
         throw new HttpException("player doesn't exist", HttpStatus.BAD_REQUEST);
       }
-      const updatedPlayer = this.prisma.players.update({
+      const updatedPlayer = await this.prisma.players.update({
         where: { id: parseInt(id) },
         data: updatePlayerDto,
       });
@@ -44,13 +44,13 @@ export class PlayersService {
   }
   async deletePlayer(id: string) {
     try {
-      const validatePlayer = this.prisma.players.findUnique({
+      const validatePlayer = await this.prisma.players.findUnique({
         where: { id: parseInt(id) },
       });
       if (!validatePlayer) {
         throw new HttpException("player doesn't exist", HttpStatus.BAD_REQUEST);
       }
-      this.prisma.players.delete({
+      await this.prisma.players.delete({
         where: { id: parseInt(id) },
       });
       await this.cacheManager.del("players");
@@ -66,7 +66,7 @@ export class PlayersService {
       if (isCached) {
         return { isCached, message: "fetched all players successfully" };
       }
-      const players = await this.prisma.users.findMany({});
+      const players = await this.prisma.players.findMany({});
       await this.cacheManager.set("players", players);
       return { ...players, message: "fetched all players sucessfully" };
     } catch (err) {
