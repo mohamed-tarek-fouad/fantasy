@@ -15,9 +15,9 @@ export class UsersService {
   ) {}
   async allUsers() {
     try {
-      const isCached = await this.cacheManager.get("users");
+      const isCached: object = await this.cacheManager.get("users");
       if (isCached) {
-        return { isCached, message: "fetched all users successfully" };
+        return { ...isCached, message: "fetched all users successfully" };
       }
       const user = await this.prisma.users.findMany({});
       if (user.length === 0) {
@@ -32,9 +32,9 @@ export class UsersService {
 
   async userById(id: string) {
     try {
-      const isCached = await this.cacheManager.get(`user${id}`);
+      const isCached: object = await this.cacheManager.get(`user${id}`);
       if (isCached) {
-        return { isCached, message: "fetched all users successfully" };
+        return { ...isCached, message: "fetched all users successfully" };
       }
       const user = await this.prisma.users.findUnique({
         where: {

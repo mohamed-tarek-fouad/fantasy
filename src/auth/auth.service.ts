@@ -82,6 +82,7 @@ export class AuthService {
       if (userExist) {
         throw new HttpException("user already exist", HttpStatus.BAD_REQUEST);
       }
+      await this.cacheManager.del("users");
       const saltOrRounds = 10;
       userDto.password = await bcrypt.hash(userDto.password, saltOrRounds);
       const user = await this.prisma.users.create({

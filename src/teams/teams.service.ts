@@ -69,9 +69,9 @@ export class TeamsService {
   }
   async allTeams() {
     try {
-      const isCached = await this.cacheManager.get("teams");
+      const isCached: object = await this.cacheManager.get("teams");
       if (isCached) {
-        return { isCached, message: "fetched all teams successfully" };
+        return { ...isCached, message: "fetched all teams successfully" };
       }
       const teams = await this.prisma.team.findMany({});
       await this.cacheManager.set("teams", teams);
@@ -82,9 +82,9 @@ export class TeamsService {
   }
   async teamById(id: string) {
     try {
-      const isCached = await this.cacheManager.get(`team${id}`);
+      const isCached: object = await this.cacheManager.get(`team${id}`);
       if (isCached) {
-        return { isCached, message: "fetched team successfully" };
+        return { ...isCached, message: "fetched team successfully" };
       }
       const team = await this.prisma.users.findUnique({
         where: { id: parseInt(id) },
