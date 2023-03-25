@@ -15,16 +15,17 @@ export class UsersService {
   ) {}
   async allUsers() {
     try {
-      const isCached: object = await this.cacheManager.get("users");
+      const isCached = await this.cacheManager.get("users");
+      const user = isCached;
       if (isCached) {
-        return { ...isCached, message: "fetched all users successfully" };
+        return { user, message: "fetched all users successfully" };
       }
-      const user = await this.prisma.users.findMany({});
-      if (user.length === 0) {
+      const users = await this.prisma.users.findMany({});
+      if (users.length === 0) {
         throw new HttpException("user does'nt exist", HttpStatus.BAD_REQUEST);
       }
       await this.cacheManager.set("users", user);
-      return { ...user, message: "fetched all users successfully" };
+      return { user: users, message: "fetched all users successfully" };
     } catch (err) {
       return err;
     }
@@ -33,10 +34,12 @@ export class UsersService {
   async userById(id: string) {
     try {
       const isCached: object = await this.cacheManager.get(`user${id}`);
+      const user = isCached;
       if (isCached) {
-        return { ...isCached, message: "fetched all users successfully" };
+        return { user, message: "fetched all users successfully" };
       }
-      const user = await this.prisma.users.findUnique({
+
+      const userFound = await this.prisma.users.findUnique({
         where: {
           id: parseInt(id),
         },
@@ -48,9 +51,9 @@ export class UsersService {
         );
       }
 
-      delete user.password;
+      delete userFound.password;
       await this.cacheManager.set(`user${id}`, {
-        ...user,
+        user: userFound,
       });
       return { ...user, message: "user fetched successfully" };
     } catch (err) {
