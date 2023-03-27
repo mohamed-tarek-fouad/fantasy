@@ -32,35 +32,35 @@ export class UserTeamService {
         parseInt(sup1Id),
         parseInt(sup2Id),
       ];
-      const arr = [
-        { role: "toplane", id: parseInt(toplanerId) },
-        { role: "jungle", id: parseInt(junglerId) },
-        { role: "midlane", id: parseInt(midlanerId) },
-        { role: "botlane", id: parseInt(botlanerId) },
-        { role: "support", id: parseInt(supporterId) },
-        { role: "sup1", id: parseInt(sup1Id) },
-        { role: "sup2", id: parseInt(sup2Id) },
-      ].sort(function (a, b) {
-        return a.id - b.id;
-      });
-      const test = await this.prisma.players.findMany({
-        where: {
-          OR: [
-            { id: parseInt(toplanerId) },
-            { id: parseInt(junglerId) },
-            { id: parseInt(midlanerId) },
-            { id: parseInt(botlanerId) },
-            { id: parseInt(supporterId) },
-            { id: parseInt(sup1Id) },
-            { id: parseInt(sup2Id) },
-          ],
-        },
-      });
-      for (let i = 0; i < 5; i++) {
-        if (arr[i].role !== test[i].lane) {
-          console.log("wrong");
-        }
-      }
+      // const arr = [
+      //   { role: "toplane", id: parseInt(toplanerId) },
+      //   { role: "jungle", id: parseInt(junglerId) },
+      //   { role: "midlane", id: parseInt(midlanerId) },
+      //   { role: "botlane", id: parseInt(botlanerId) },
+      //   { role: "support", id: parseInt(supporterId) },
+      //   { role: "sup1", id: parseInt(sup1Id) },
+      //   { role: "sup2", id: parseInt(sup2Id) },
+      // ].sort(function (a, b) {
+      //   return a.id - b.id;
+      // });
+      // const test = await this.prisma.players.findMany({
+      //   where: {
+      //     OR: [
+      //       { id: parseInt(toplanerId) },
+      //       { id: parseInt(junglerId) },
+      //       { id: parseInt(midlanerId) },
+      //       { id: parseInt(botlanerId) },
+      //       { id: parseInt(supporterId) },
+      //       { id: parseInt(sup1Id) },
+      //       { id: parseInt(sup2Id) },
+      //     ],
+      //   },
+      // });
+      // for (let i = 0; i < 5; i++) {
+      //   if (arr[i].role !== test[i].lane) {
+      //     console.log("wrong");
+      //   }
+      // }
 
       if (!comingTeam.includes(parseInt(captinId))) {
         throw new HttpException("invalid captin ID", HttpStatus.BAD_REQUEST);
@@ -189,6 +189,14 @@ export class UserTeamService {
         },
         include: {
           user: true,
+          toplaner: true,
+          jungler: true,
+          midlaner: true,
+          botlaner: true,
+          supporter: true,
+          sup1: true,
+          sup2: true,
+          captin: true,
         },
       });
 
@@ -233,7 +241,22 @@ export class UserTeamService {
         delete userTeam.sup1Id;
         delete userTeam.sup2Id;
         delete userTeam.captinId;
-
+        const totalMoney =
+          userTeam.toplaner.cost +
+          userTeam.jungler.cost +
+          userTeam.midlaner.cost +
+          userTeam.botlaner.cost +
+          userTeam.supporter.cost +
+          userTeam.sup1.cost +
+          userTeam.sup2.cost;
+        await this.prisma.users.update({
+          where: {
+            id: req.user.userId,
+          },
+          data: {
+            budget: { decrement: totalMoney },
+          },
+        });
         return { ...userTeam, message: "team has been created successfully" };
       }
       const diffrence = comingTeam.filter((x) => !previousTeam.includes(x));
@@ -268,6 +291,24 @@ export class UserTeamService {
           captin: true,
         },
       });
+      const currTeam = [
+        userTeam.toplaner,
+        userTeam.jungler,
+        userTeam.midlaner,
+        userTeam.botlaner,
+        userTeam.supporter,
+        userTeam.sup1,
+        userTeam.sup2,
+      ];
+      const prevTeam = [
+        checkUserTeamExist.toplaner,
+        checkUserTeamExist.jungler,
+        checkUserTeamExist.midlaner,
+        checkUserTeamExist.botlaner,
+        checkUserTeamExist.supporter,
+        checkUserTeamExist.sup1,
+        checkUserTeamExist.sup2,
+      ];
       delete userTeam.toplanerId;
       delete userTeam.junglerId;
       delete userTeam.midlanerId;
@@ -276,6 +317,21 @@ export class UserTeamService {
       delete userTeam.sup1Id;
       delete userTeam.sup2Id;
       delete userTeam.captinId;
+      let newBudget = 0;
+      for (let i = 0; i < currTeam.length; i++) {
+        if (currTeam[i] != prevTeam[i]) {
+          newBudget += currTeam[i].cost - prevTeam[i].cost;
+        }
+      }
+
+      await this.prisma.users.update({
+        where: {
+          id: req.user.userId,
+        },
+        data: {
+          budget: { decrement: newBudget },
+        },
+      });
       return { ...userTeam, message: "edits has been applied successfully" };
     } catch (err) {
       return err;
@@ -310,6 +366,43 @@ export class UserTeamService {
         throw new HttpException("invalid ID", HttpStatus.BAD_REQUEST);
       }
       return { ...userTeam, message: "fetched all user team successfully" };
+    } catch (err) {
+      return err;
+    }
+  }
+  async applyCard(
+    tripleCaptin: boolean,
+    allIn: boolean,
+    teamFan: boolean,
+    req,
+  ) {
+    try {
+      const cards = await this.prisma.userTeam.findUnique({
+        where: {
+          userId: req.user.userId,
+        },
+      });
+      if (
+        (cards.tripleCaptin === 0 && tripleCaptin) ||
+        (cards.allIn === 0 && allIn) ||
+        (cards.teamFan === 0 && teamFan)
+      ) {
+        throw new HttpException(
+          "you don't have enough chips",
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const applyCard = await this.prisma.userTeam.update({
+        where: {
+          userId: req.user.userId,
+        },
+        data: {
+          tripleCaptin: tripleCaptin ? { decrement: 1 } : null,
+          allIn: allIn ? { decrement: 1 } : null,
+          teamFan: teamFan ? { decrement: 1 } : null,
+        },
+      });
+      return { ...applyCard, message: "card activated successfully" };
     } catch (err) {
       return err;
     }

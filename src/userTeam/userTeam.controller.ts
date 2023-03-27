@@ -5,6 +5,7 @@ import { UserTeamService } from "./userTeam.service";
 import { ApiBearerAuth } from "@nestjs/swagger/dist";
 import { UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "./../jwtAuthGuard";
+import { Query } from "@nestjs/common/decorators";
 
 @Controller("userTeam")
 export class UserTeamController {
@@ -36,6 +37,17 @@ export class UserTeamController {
       captinId,
       req,
     );
+  }
+  @ApiBearerAuth("access-token")
+  @UseGuards(JwtAuthGuard)
+  @Post("applyCard/:tripleCaptin/:allIn/:teamFan")
+  applyCard(
+    @Query("tripleCaptin") tripleCaptin: boolean,
+    @Query("allIn") allIn: boolean,
+    @Query("teamFan") teamFan: boolean,
+    @Req() req,
+  ) {
+    return this.userTeamService.applyCard(tripleCaptin, allIn, teamFan, req);
   }
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
