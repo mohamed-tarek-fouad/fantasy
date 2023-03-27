@@ -43,7 +43,6 @@ export class UserTeamService {
       ].sort(function (a, b) {
         return a.id - b.id;
       });
-      console.log(arr);
       const test = await this.prisma.players.findMany({
         where: {
           OR: [
@@ -57,7 +56,6 @@ export class UserTeamService {
           ],
         },
       });
-      console.log(test);
       for (let i = 0; i < 5; i++) {
         if (arr[i].role !== test[i].lane) {
           console.log("wrong");
@@ -129,30 +127,44 @@ export class UserTeamService {
         sameRoleCheck[0],
         sameRoleCheck[1],
       ];
+      const map = {};
       for (let i = 0; i < team.length; i++) {
-        let counter1 = 0;
-        let counter2 = 0;
-        for (let j = 1; j < team.length; j++) {
-          if (team[i].teamId === team[j].teamId) {
-            counter1 += 1;
-          }
-          if (counter1 === 2) {
-            counter2 += 1;
-          }
-          if (counter2 === 2) {
+        if (map[team[i].teamId]) {
+          map[team[i].teamId] += 1;
+          if (map[team[i].teamId] === 2) {
             throw new HttpException(
-              "you can have only 2 players from the same team others should be one from each",
+              "you can have only 2 players from the same team",
               HttpStatus.BAD_REQUEST,
             );
           }
-          if (counter1 > 2) {
-            throw new HttpException(
-              "you can't have more than two players from the same team",
-              HttpStatus.BAD_REQUEST,
-            );
-          }
+        } else {
+          map[team[i].teamId] = 1;
         }
       }
+      // for (let i = 0; i < team.length; i++) {
+      //   let counter1 = 0;
+      //   let counter2 = 0;
+      //   for (let j = 1; j < team.length; j++) {
+      //     if (team[i].teamId === team[j].teamId) {
+      //       counter1 += 1;
+      //     }
+      //     if (counter1 === 2) {
+      //       counter2 += 1;
+      //     }
+      //     if (counter2 === 2) {
+      //       throw new HttpException(
+      //         "you can have only 2 players from the same team others should be one from each",
+      //         HttpStatus.BAD_REQUEST,
+      //       );
+      //     }
+      //     if (counter1 > 2) {
+      //       throw new HttpException(
+      //         "you can't have more than two players from the same team",
+      //         HttpStatus.BAD_REQUEST,
+      //       );
+      //     }
+      //   }
+      // }
       if (
         toplaner.lane !== "toplane" ||
         jungler.lane !== "jungle" ||
@@ -165,12 +177,12 @@ export class UserTeamService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      if (sameRoleCheck[0].lane === sameRoleCheck[1].lane) {
-        throw new HttpException(
-          `can't have two sup ${sameRoleCheck[0].lane}rs`,
-          HttpStatus.BAD_REQUEST,
-        );
-      }
+      // if (sameRoleCheck[0].lane === sameRoleCheck[1].lane) {
+      //   throw new HttpException(
+      //     `can't have two sup ${sameRoleCheck[0].lane}rs`,
+      //     HttpStatus.BAD_REQUEST,
+      //   );
+      // }
       const checkUserTeamExist = await this.prisma.userTeam.findUnique({
         where: {
           userId: req.user.userId,
