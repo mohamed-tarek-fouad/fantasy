@@ -249,7 +249,7 @@ export class UserTeamService {
           userTeam.supporter.cost +
           userTeam.sup1.cost +
           userTeam.sup2.cost;
-        await this.prisma.users.update({
+        await this.prisma.userTeam.update({
           where: {
             id: req.user.userId,
           },
@@ -324,7 +324,7 @@ export class UserTeamService {
         }
       }
 
-      await this.prisma.users.update({
+      await this.prisma.userTeam.update({
         where: {
           id: req.user.userId,
         },
