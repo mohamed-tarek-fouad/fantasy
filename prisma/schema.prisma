@@ -11,18 +11,17 @@ datasource db {
 }
 
 model Users {
-  id          Int    @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   username    String
   nationality String
   age         Int
-
-  riotId   String
-  email    String    @unique
-  password String
-  rank     String    @default("null")
-  tokens   tokens[]
-  role     UserRole  @default(user)
-  UserTeam UserTeam?
+  riotId      String
+  email       String    @unique
+  password    String
+  rank        String    @default("null")
+  tokens      tokens[]
+  role        UserRole  @default(user)
+  UserTeam    UserTeam?
 }
 
 model Players {
@@ -33,6 +32,7 @@ model Players {
   lane        Lane
   teamId      String
   team        Team        @relation(fields: [teamId], references: [teamName])
+  otp         String      @default("")
   toplaner    UserTeam[]  @relation("toplaner")
   jungler     UserTeam[]  @relation("jungler")
   midlaner    UserTeam[]  @relation("midlaner")
@@ -80,11 +80,12 @@ model UserTeam {
   tripleCaptin       Int     @default(1) //triple points for the captin
   allIn              Int     @default(1) // count points for sup players
   teamFan            Int     @default(1) //5players from same team or 4 or 3
+  nextWeekPoints     Int     @default(0)
 }
 
 model Matches {
   id      Int      @id @default(autoincrement())
-  date    DateTime
+  date    DateTime @default(now())
   team1Id String
   team2Id String
   team1   Team     @relation(fields: [team1Id], references: [teamName], name: "team1")

@@ -1,3 +1,4 @@
+import { MatchesModule } from "./matches/matches.module";
 import { UserTeamModule } from "./userTeam/userteam.module";
 import { TeamsModule } from "./teams/teams.module";
 import { PlayersModule } from "./players/players.module";
@@ -12,6 +13,7 @@ import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
 @Module({
   imports: [
+    MatchesModule,
     UserTeamModule,
     UserTeamModule,
     TeamsModule,

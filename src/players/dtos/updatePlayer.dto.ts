@@ -23,6 +23,10 @@ export class UpdatePlayerDto {
   @IsNotEmpty()
   @IsOptional()
   teamId: string;
+  @ApiProperty()
+  @IsOptional()
+  @IsNotEmpty()
+  otp: string;
 }
 
 enum Lane {

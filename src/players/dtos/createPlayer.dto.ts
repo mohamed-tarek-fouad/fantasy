@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { IsNotEmpty, MinLength } from "class-validator";
+import { IsNotEmpty, IsOptional, MinLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger/dist/decorators";
 export class CreatePlayerDto {
   @ApiProperty()
@@ -18,6 +18,10 @@ export class CreatePlayerDto {
   @ApiProperty()
   @IsNotEmpty()
   teamId: string;
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsOptional()
+  otp: string;
 }
 
 enum Lane {

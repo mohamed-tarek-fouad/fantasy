@@ -62,7 +62,11 @@ export class UserTeamService {
       //   }
       // }
 
-      if (!comingTeam.includes(parseInt(captinId))) {
+      if (
+        !comingTeam.includes(parseInt(captinId)) ||
+        captinId === sup1Id ||
+        captinId === sup2Id
+      ) {
         throw new HttpException("invalid captin ID", HttpStatus.BAD_REQUEST);
       }
       if (
@@ -259,12 +263,11 @@ export class UserTeamService {
         });
         return { ...userTeam, message: "team has been created successfully" };
       }
+      let points = 0;
       const diffrence = comingTeam.filter((x) => !previousTeam.includes(x));
       if (diffrence.length > checkUserTeamExist.transfers) {
-        throw new HttpException(
-          "not enogh transfers available",
-          HttpStatus.BAD_REQUEST,
-        );
+        points = -1;
+        points *= diffrence.length - checkUserTeamExist.transfers;
       }
       const userTeam = await this.prisma.userTeam.update({
         where: { userId: req.user.userId },
@@ -279,6 +282,7 @@ export class UserTeamService {
           userId: req.user.userId,
           captinId: parseInt(captinId),
           transfers: checkUserTeamExist.transfers - diffrence.length,
+          nextWeekPoints: points,
         },
         include: {
           toplaner: true,
@@ -433,8 +437,8 @@ export class UserTeamService {
               { midlanerId: parseInt(Object.keys(map)[player]) },
               { botlanerId: parseInt(Object.keys(map)[player]) },
               { supporterId: parseInt(Object.keys(map)[player]) },
-              { sup1Id: parseInt(Object.keys(map)[player]) },
-              { sup2Id: parseInt(Object.keys(map)[player]) },
+              // { sup1Id: parseInt(Object.keys(map)[player]) },
+              // { sup2Id: parseInt(Object.keys(map)[player]) },
             ],
           },
           data: {
