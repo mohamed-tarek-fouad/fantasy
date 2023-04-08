@@ -27,12 +27,12 @@ export class MatchesController {
   deleteMatch(@Param("id") id: string) {
     return this.matchesService.deleteMatch(id);
   }
+  @Get("allMatches")
+  allMatchs() {
+    return this.matchesService.allMatches();
+  }
   @Get(":id")
   matchbyId(@Param("id") id: string) {
     return this.matchesService.matchById(id);
-  }
-  @Get()
-  allMatchs() {
-    return this.matchesService.allMatches();
   }
 }

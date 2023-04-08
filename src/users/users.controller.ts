@@ -6,7 +6,7 @@ import { JwtAuthGuard } from "../jwtAuthGuard";
 export class UsersController {
   constructor(private usersService: UsersService) {}
   @UseGuards(JwtAuthGuard)
-  @Get("")
+  @Get("allUsers")
   allUsers() {
     return this.usersService.allUsers();
   }

@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `users` MODIFY `points` INTEGER NOT NULL DEFAULT 0;

@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `playerkda` MODIFY `MVB` BOOLEAN NOT NULL DEFAULT false;

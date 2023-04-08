@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `players` ADD COLUMN `otp` VARCHAR(191) NOT NULL DEFAULT '';

@@ -4,16 +4,10 @@ CREATE TABLE `Users` (
     `username` VARCHAR(191) NOT NULL,
     `nationality` VARCHAR(191) NOT NULL,
     `age` INTEGER NOT NULL,
-    `budget` INTEGER NOT NULL DEFAULT 100000000,
     `riotId` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
     `rank` VARCHAR(191) NOT NULL DEFAULT 'null',
-    `points` INTEGER NOT NULL,
-    `transfers` INTEGER NOT NULL DEFAULT 2,
-    `tripleCaptin` INTEGER NOT NULL DEFAULT 1,
-    `allIn` INTEGER NOT NULL DEFAULT 1,
-    `teamFan` INTEGER NOT NULL DEFAULT 1,
     `role` ENUM('user', 'admin') NOT NULL DEFAULT 'user',
 
     UNIQUE INDEX `Users_email_key`(`email`),
@@ -26,23 +20,24 @@ CREATE TABLE `Players` (
     `playerName` VARCHAR(191) NOT NULL,
     `nationality` VARCHAR(191) NOT NULL,
     `cost` INTEGER NOT NULL,
-    `lane` ENUM('topLane', 'jungle', 'midlane', 'botlane', 'support') NOT NULL,
-    `teamId` INTEGER NOT NULL,
+    `lane` ENUM('toplane', 'jungle', 'midlane', 'botlane', 'support') NOT NULL,
+    `teamId` VARCHAR(191) NOT NULL,
+    `otp` VARCHAR(191) NOT NULL DEFAULT '',
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `Team` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `teamName` VARCHAR(191) NOT NULL,
 
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`teamName`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `UserTeam` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `budget` INTEGER NOT NULL DEFAULT 100000000,
     `userId` INTEGER NOT NULL,
     `toplanerId` INTEGER NOT NULL,
     `junglerId` INTEGER NOT NULL,
@@ -51,6 +46,16 @@ CREATE TABLE `UserTeam` (
     `supporterId` INTEGER NOT NULL,
     `sup1Id` INTEGER NOT NULL,
     `sup2Id` INTEGER NOT NULL,
+    `captinId` INTEGER NOT NULL,
+    `tripleCaptinStatus` BOOLEAN NOT NULL DEFAULT false,
+    `allInStatus` BOOLEAN NOT NULL DEFAULT false,
+    `teamFanStatus` BOOLEAN NOT NULL DEFAULT false,
+    `points` INTEGER NOT NULL DEFAULT 0,
+    `transfers` INTEGER NOT NULL DEFAULT 2,
+    `tripleCaptin` INTEGER NOT NULL DEFAULT 1,
+    `allIn` INTEGER NOT NULL DEFAULT 1,
+    `teamFan` INTEGER NOT NULL DEFAULT 1,
+    `nextWeekPoints` INTEGER NOT NULL DEFAULT 0,
 
     UNIQUE INDEX `UserTeam_userId_key`(`userId`),
     PRIMARY KEY (`id`)
@@ -59,9 +64,9 @@ CREATE TABLE `UserTeam` (
 -- CreateTable
 CREATE TABLE `Matches` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `date` DATETIME(3) NOT NULL,
-    `team1Id` INTEGER NOT NULL,
-    `team2Id` INTEGER NOT NULL,
+    `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `team1Id` VARCHAR(191) NOT NULL,
+    `team2Id` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -74,7 +79,7 @@ CREATE TABLE `PlayerKDA` (
     `deathes` INTEGER NOT NULL,
     `assists` INTEGER NOT NULL,
     `visionScore` INTEGER NOT NULL,
-    `MVB` BOOLEAN NOT NULL,
+    `MVB` BOOLEAN NOT NULL DEFAULT false,
     `cs` INTEGER NOT NULL,
     `points` INTEGER NOT NULL DEFAULT 0,
 
@@ -91,7 +96,7 @@ CREATE TABLE `tokens` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `Players` ADD CONSTRAINT `Players_teamId_fkey` FOREIGN KEY (`teamId`) REFERENCES `Team`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Players` ADD CONSTRAINT `Players_teamId_fkey` FOREIGN KEY (`teamId`) REFERENCES `Team`(`teamName`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `UserTeam` ADD CONSTRAINT `UserTeam_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -118,10 +123,13 @@ ALTER TABLE `UserTeam` ADD CONSTRAINT `UserTeam_sup1Id_fkey` FOREIGN KEY (`sup1I
 ALTER TABLE `UserTeam` ADD CONSTRAINT `UserTeam_sup2Id_fkey` FOREIGN KEY (`sup2Id`) REFERENCES `Players`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Matches` ADD CONSTRAINT `Matches_team1Id_fkey` FOREIGN KEY (`team1Id`) REFERENCES `Team`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `UserTeam` ADD CONSTRAINT `UserTeam_captinId_fkey` FOREIGN KEY (`captinId`) REFERENCES `Players`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Matches` ADD CONSTRAINT `Matches_team2Id_fkey` FOREIGN KEY (`team2Id`) REFERENCES `Team`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Matches` ADD CONSTRAINT `Matches_team1Id_fkey` FOREIGN KEY (`team1Id`) REFERENCES `Team`(`teamName`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Matches` ADD CONSTRAINT `Matches_team2Id_fkey` FOREIGN KEY (`team2Id`) REFERENCES `Team`(`teamName`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `PlayerKDA` ADD CONSTRAINT `PlayerKDA_playerId_fkey` FOREIGN KEY (`playerId`) REFERENCES `Players`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

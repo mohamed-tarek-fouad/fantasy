@@ -30,12 +30,12 @@ export class PlayersController {
   deletePlayer(@Param("id") id: string) {
     return this.playersService.deletePlayer(id);
   }
+  @Get("allPlayers")
+  allPlayers() {
+    return this.playersService.allPlayers();
+  }
   @Get(":id")
   playerbyId(@Param("id") id: string) {
     return this.playersService.playerById(id);
-  }
-  @Get()
-  allPlayers() {
-    return this.playersService.allPlayers();
   }
 }
