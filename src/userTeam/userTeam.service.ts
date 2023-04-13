@@ -203,7 +203,6 @@ export class UserTeamService {
           captin: true,
         },
       });
-
       const previousTeam = [
         checkUserTeamExist?.toplanerId,
         checkUserTeamExist?.junglerId,
@@ -237,14 +236,6 @@ export class UserTeamService {
             captin: true,
           },
         });
-        delete userTeam.toplanerId;
-        delete userTeam.junglerId;
-        delete userTeam.midlanerId;
-        delete userTeam.botlanerId;
-        delete userTeam.supporterId;
-        delete userTeam.sup1Id;
-        delete userTeam.sup2Id;
-        delete userTeam.captinId;
         const totalMoney =
           userTeam.toplaner.cost +
           userTeam.jungler.cost +
@@ -253,15 +244,36 @@ export class UserTeamService {
           userTeam.supporter.cost +
           userTeam.sup1.cost +
           userTeam.sup2.cost;
-        await this.prisma.userTeam.update({
+        const appliedBudget = await this.prisma.userTeam.update({
           where: {
-            id: req.user.userId,
+            userId: req.user.userId,
           },
           data: {
             budget: { decrement: totalMoney },
           },
+          include: {
+            toplaner: true,
+            jungler: true,
+            midlaner: true,
+            botlaner: true,
+            supporter: true,
+            sup1: true,
+            sup2: true,
+            captin: true,
+          },
         });
-        return { ...userTeam, message: "team has been created successfully" };
+        delete appliedBudget.toplanerId;
+        delete appliedBudget.junglerId;
+        delete appliedBudget.midlanerId;
+        delete appliedBudget.botlanerId;
+        delete appliedBudget.supporterId;
+        delete appliedBudget.sup1Id;
+        delete appliedBudget.sup2Id;
+        delete appliedBudget.captinId;
+        return {
+          userTeam: appliedBudget,
+          message: "team has been created successfully",
+        };
       }
       let points = 0;
       const diffrence = comingTeam.filter((x) => !previousTeam.includes(x));
@@ -282,7 +294,7 @@ export class UserTeamService {
           userId: req.user.userId,
           captinId: parseInt(captinId),
           transfers: checkUserTeamExist.transfers - diffrence.length,
-          nextWeekPoints: points,
+          nextWeekPoints: { decrement: points },
         },
         include: {
           toplaner: true,
@@ -313,30 +325,43 @@ export class UserTeamService {
         checkUserTeamExist.sup1,
         checkUserTeamExist.sup2,
       ];
-      delete userTeam.toplanerId;
-      delete userTeam.junglerId;
-      delete userTeam.midlanerId;
-      delete userTeam.botlanerId;
-      delete userTeam.supporterId;
-      delete userTeam.sup1Id;
-      delete userTeam.sup2Id;
-      delete userTeam.captinId;
+
       let newBudget = 0;
       for (let i = 0; i < currTeam.length; i++) {
         if (currTeam[i] != prevTeam[i]) {
           newBudget += currTeam[i].cost - prevTeam[i].cost;
         }
       }
-
-      await this.prisma.userTeam.update({
+      const appliedBudget = await this.prisma.userTeam.update({
         where: {
-          id: req.user.userId,
+          userId: req.user.userId,
         },
         data: {
           budget: { decrement: newBudget },
         },
+        include: {
+          toplaner: true,
+          jungler: true,
+          midlaner: true,
+          botlaner: true,
+          supporter: true,
+          sup1: true,
+          sup2: true,
+          captin: true,
+        },
       });
-      return { ...userTeam, message: "edits has been applied successfully" };
+      delete appliedBudget.toplanerId;
+      delete appliedBudget.junglerId;
+      delete appliedBudget.midlanerId;
+      delete appliedBudget.botlanerId;
+      delete appliedBudget.supporterId;
+      delete appliedBudget.sup1Id;
+      delete appliedBudget.sup2Id;
+      delete appliedBudget.captinId;
+      return {
+        userTeam: appliedBudget,
+        message: "edits has been applied successfully",
+      };
     } catch (err) {
       return err;
     }
