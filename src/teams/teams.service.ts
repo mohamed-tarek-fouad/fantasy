@@ -101,8 +101,8 @@ export class TeamsService {
         2 * addKDADto.kills +
         addKDADto.assists -
         addKDADto.deathes +
-        Math.round(addKDADto.cs / 100) +
-        Math.round(addKDADto.visionScore / 10);
+        Math.ceil(addKDADto.cs / 100) +
+        Math.ceil(addKDADto.visionScore / 10);
       const kda = await this.prisma.playerKDA.create({
         data: { ...addKDADto, playerId: parseInt(playerId), points },
       });

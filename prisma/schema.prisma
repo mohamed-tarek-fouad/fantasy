@@ -80,7 +80,7 @@ model UserTeam {
   transfers          Int     @default(2)
   tripleCaptin       Int     @default(1) //triple points for the captin
   allIn              Int     @default(1) // count points for sup players
-  teamFan            Int     @default(1) //5players from same team or 4 or 3
+  teamFan            Int     @default(1) //remove two max players condition form each team
   nextWeekPoints     Int     @default(0)
 }
 
@@ -104,6 +104,7 @@ model PlayerKDA {
   MVB         Boolean @default(false)
   cs          Int
   points      Int     @default(0)
+  week        Int
 }
 
 model tokens {

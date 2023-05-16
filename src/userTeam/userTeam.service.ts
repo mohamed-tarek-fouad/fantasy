@@ -5,6 +5,8 @@ import { Cache } from "cache-manager";
 import { PrismaService } from "./../prisma.service";
 import { HttpException } from "@nestjs/common";
 import { HttpStatus } from "@nestjs/common";
+import { checkTwoPlayersFromSameTeam } from "./functions/twoPLayersTeam";
+import { playerRole } from "./functions/checkRole";
 @Injectable()
 export class UserTeamService {
   constructor(
@@ -32,36 +34,6 @@ export class UserTeamService {
         parseInt(sup1Id),
         parseInt(sup2Id),
       ];
-      // const arr = [
-      //   { role: "toplane", id: parseInt(toplanerId) },
-      //   { role: "jungle", id: parseInt(junglerId) },
-      //   { role: "midlane", id: parseInt(midlanerId) },
-      //   { role: "botlane", id: parseInt(botlanerId) },
-      //   { role: "support", id: parseInt(supporterId) },
-      //   { role: "sup1", id: parseInt(sup1Id) },
-      //   { role: "sup2", id: parseInt(sup2Id) },
-      // ].sort(function (a, b) {
-      //   return a.id - b.id;
-      // });
-      // const test = await this.prisma.players.findMany({
-      //   where: {
-      //     OR: [
-      //       { id: parseInt(toplanerId) },
-      //       { id: parseInt(junglerId) },
-      //       { id: parseInt(midlanerId) },
-      //       { id: parseInt(botlanerId) },
-      //       { id: parseInt(supporterId) },
-      //       { id: parseInt(sup1Id) },
-      //       { id: parseInt(sup2Id) },
-      //     ],
-      //   },
-      // });
-      // for (let i = 0; i < 5; i++) {
-      //   if (arr[i].role !== test[i].lane) {
-      //     console.log("wrong");
-      //   }
-      // }
-
       if (
         !comingTeam.includes(parseInt(captinId)) ||
         captinId === sup1Id ||
@@ -131,62 +103,15 @@ export class UserTeamService {
         sameRoleCheck[0],
         sameRoleCheck[1],
       ];
-      const map = {};
-      for (let i = 0; i < team.length; i++) {
-        if (map[team[i].teamId]) {
-          map[team[i].teamId] += 1;
-          if (map[team[i].teamId] === 3) {
-            throw new HttpException(
-              "you can have only 2 players from the same team",
-              HttpStatus.BAD_REQUEST,
-            );
-          }
-        } else {
-          map[team[i].teamId] = 1;
-        }
-      }
-      // for (let i = 0; i < team.length; i++) {
-      //   let counter1 = 0;
-      //   let counter2 = 0;
-      //   for (let j = 1; j < team.length; j++) {
-      //     if (team[i].teamId === team[j].teamId) {
-      //       counter1 += 1;
-      //     }
-      //     if (counter1 === 2) {
-      //       counter2 += 1;
-      //     }
-      //     if (counter2 === 2) {
-      //       throw new HttpException(
-      //         "you can have only 2 players from the same team others should be one from each",
-      //         HttpStatus.BAD_REQUEST,
-      //       );
-      //     }
-      //     if (counter1 > 2) {
-      //       throw new HttpException(
-      //         "you can't have more than two players from the same team",
-      //         HttpStatus.BAD_REQUEST,
-      //       );
-      //     }
-      //   }
-      // }
-      if (
-        toplaner.lane !== "toplane" ||
-        jungler.lane !== "jungle" ||
-        midlaner.lane !== "midlane" ||
-        botlaner.lane !== "botlane" ||
-        supporter.lane !== "support"
-      ) {
-        throw new HttpException(
-          "invalid lane for player",
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      // if (sameRoleCheck[0].lane === sameRoleCheck[1].lane) {
-      //   throw new HttpException(
-      //     `can't have two sup ${sameRoleCheck[0].lane}rs`,
-      //     HttpStatus.BAD_REQUEST,
-      //   );
-      // }
+      checkTwoPlayersFromSameTeam(team);
+      playerRole(
+        toplaner,
+        jungler,
+        midlaner,
+        botlaner,
+        supporter,
+        sameRoleCheck,
+      );
       const checkUserTeamExist = await this.prisma.userTeam.findUnique({
         where: {
           userId: req.user.userId,
@@ -212,7 +137,15 @@ export class UserTeamService {
         checkUserTeamExist?.sup1Id,
         checkUserTeamExist?.sup2Id,
       ];
-      if (!checkUserTeamExist) {
+      const totalMoney =
+        toplaner.cost +
+        jungler.cost +
+        midlaner.cost +
+        botlaner.cost +
+        supporter.cost +
+        sameRoleCheck[0].cost +
+        sameRoleCheck[1].cost;
+      if (!checkUserTeamExist || checkUserTeamExist === null) {
         const userTeam = await this.prisma.userTeam.create({
           data: {
             toplanerId: parseInt(toplanerId),
@@ -224,6 +157,7 @@ export class UserTeamService {
             sup2Id: parseInt(sup2Id),
             userId: req.user.userId,
             captinId: parseInt(captinId),
+            budget: 100000000 - totalMoney,
           },
           include: {
             toplaner: true,
@@ -236,50 +170,29 @@ export class UserTeamService {
             captin: true,
           },
         });
-        const totalMoney =
-          userTeam.toplaner.cost +
-          userTeam.jungler.cost +
-          userTeam.midlaner.cost +
-          userTeam.botlaner.cost +
-          userTeam.supporter.cost +
-          userTeam.sup1.cost +
-          userTeam.sup2.cost;
-        const appliedBudget = await this.prisma.userTeam.update({
-          where: {
-            userId: req.user.userId,
-          },
-          data: {
-            budget: { decrement: totalMoney },
-          },
-          include: {
-            toplaner: true,
-            jungler: true,
-            midlaner: true,
-            botlaner: true,
-            supporter: true,
-            sup1: true,
-            sup2: true,
-            captin: true,
-          },
-        });
-        delete appliedBudget.toplanerId;
-        delete appliedBudget.junglerId;
-        delete appliedBudget.midlanerId;
-        delete appliedBudget.botlanerId;
-        delete appliedBudget.supporterId;
-        delete appliedBudget.sup1Id;
-        delete appliedBudget.sup2Id;
-        delete appliedBudget.captinId;
+        delete userTeam.toplanerId;
+        delete userTeam.junglerId;
+        delete userTeam.midlanerId;
+        delete userTeam.botlanerId;
+        delete userTeam.supporterId;
+        delete userTeam.sup1Id;
+        delete userTeam.sup2Id;
+        delete userTeam.captinId;
         return {
-          userTeam: appliedBudget,
+          userTeam,
           message: "team has been created successfully",
         };
       }
+      //*********if there is team*********
       let points = 0;
-      const diffrence = comingTeam.filter((x) => !previousTeam.includes(x));
-      if (diffrence.length > checkUserTeamExist.transfers) {
-        points = -1;
-        points *= diffrence.length - checkUserTeamExist.transfers;
+      let diffrence: number[] = [];
+      //teamfan status check
+      if (!checkUserTeamExist.teamFanStatus) {
+        diffrence = comingTeam.filter((x) => !previousTeam.includes(x));
+        if (diffrence.length > checkUserTeamExist.transfers) {
+          points = -1;
+          points *= diffrence.length - checkUserTeamExist.transfers;
+        }
       }
       const userTeam = await this.prisma.userTeam.update({
         where: { userId: req.user.userId },
@@ -293,7 +206,10 @@ export class UserTeamService {
           sup2Id: parseInt(sup2Id),
           userId: req.user.userId,
           captinId: parseInt(captinId),
-          transfers: checkUserTeamExist.transfers - diffrence.length,
+          transfers:
+            checkUserTeamExist.transfers - diffrence.length < 0
+              ? 0
+              : checkUserTeamExist.transfers - diffrence.length,
           nextWeekPoints: { decrement: points },
         },
         include: {
@@ -360,12 +276,13 @@ export class UserTeamService {
       delete appliedBudget.captinId;
       return {
         userTeam: appliedBudget,
-        message: "edits has been applied successfully",
+        message: "Edits has been applied successfully",
       };
     } catch (err) {
       return err;
     }
   }
+
   async userTeamById(req) {
     try {
       const userTeam = await this.prisma.userTeam.findUnique({
@@ -440,11 +357,22 @@ export class UserTeamService {
   async addPoints() {
     try {
       const map = {};
-      const playersKDA = await this.prisma.playerKDA.findMany({
+      let playersKDA = await this.prisma.playerKDA.findMany({
         select: {
           points: true,
           playerId: true,
+          week: true,
         },
+      });
+      const week = await this.prisma.playerKDA.aggregate({
+        _max: {
+          week: true,
+        },
+      });
+      playersKDA = playersKDA.filter((player) => {
+        if (player.week == week._max.week) {
+          return player;
+        }
       });
       for (let i = 0; i < playersKDA.length; i++) {
         if (playersKDA[i].playerId in map) {
@@ -454,20 +382,77 @@ export class UserTeamService {
         }
       }
       for (let player = 0; player < Object.keys(map).length; player++) {
+        //if triple captin activated
         await this.prisma.userTeam.updateMany({
           where: {
-            OR: [
-              { toplanerId: parseInt(Object.keys(map)[player]) },
-              { junglerId: parseInt(Object.keys(map)[player]) },
-              { midlanerId: parseInt(Object.keys(map)[player]) },
-              { botlanerId: parseInt(Object.keys(map)[player]) },
-              { supporterId: parseInt(Object.keys(map)[player]) },
-              // { sup1Id: parseInt(Object.keys(map)[player]) },
-              // { sup2Id: parseInt(Object.keys(map)[player]) },
+            AND: [
+              {
+                OR: [
+                  { toplanerId: parseInt(Object.keys(map)[player]) },
+                  { junglerId: parseInt(Object.keys(map)[player]) },
+                  { midlanerId: parseInt(Object.keys(map)[player]) },
+                  { botlanerId: parseInt(Object.keys(map)[player]) },
+                  { supporterId: parseInt(Object.keys(map)[player]) },
+                ],
+              },
+              { allInStatus: false },
+              { tripleCaptinStatus: true },
+            ],
+          },
+          data: {
+            points: { increment: Number(Object.values(map)[player]) * 1.5 },
+          },
+        });
+
+        //if allin activated
+        await this.prisma.userTeam.updateMany({
+          where: {
+            AND: [
+              {
+                OR: [
+                  { toplanerId: parseInt(Object.keys(map)[player]) },
+                  { junglerId: parseInt(Object.keys(map)[player]) },
+                  { midlanerId: parseInt(Object.keys(map)[player]) },
+                  { botlanerId: parseInt(Object.keys(map)[player]) },
+                  { supporterId: parseInt(Object.keys(map)[player]) },
+                  { sup1Id: parseInt(Object.keys(map)[player]) },
+                  { sup2Id: parseInt(Object.keys(map)[player]) },
+                ],
+              },
+              { allInStatus: true },
             ],
           },
           data: {
             points: { increment: Number(Object.values(map)[player]) },
+            allInStatus: false,
+          },
+        });
+
+        //if allin activated
+        //if triple captin activated
+        await this.prisma.userTeam.updateMany({
+          where: {
+            AND: [
+              {
+                OR: [
+                  { toplanerId: parseInt(Object.keys(map)[player]) },
+                  { junglerId: parseInt(Object.keys(map)[player]) },
+                  { midlanerId: parseInt(Object.keys(map)[player]) },
+                  { botlanerId: parseInt(Object.keys(map)[player]) },
+                  { supporterId: parseInt(Object.keys(map)[player]) },
+                  { sup1Id: parseInt(Object.keys(map)[player]) },
+                  { sup2Id: parseInt(Object.keys(map)[player]) },
+                ],
+              },
+              { allInStatus: true },
+              { tripleCaptinStatus: true },
+            ],
+          },
+          data: {
+            points: { increment: Number(Object.values(map)[player]) * 1.5 },
+            allInStatus: false,
+            tripleCaptinStatus: false,
+            teamFanStatus: false,
           },
         });
       }

@@ -21,4 +21,8 @@ export class AddKDADto {
   @IsNotEmpty()
   @IsOptional()
   MVB: boolean;
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsOptional()
+  week: number;
 }
